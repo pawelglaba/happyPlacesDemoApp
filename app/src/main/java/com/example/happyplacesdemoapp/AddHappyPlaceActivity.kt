@@ -38,16 +38,9 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        //This call the parent constructor
         super.onCreate(savedInstanceState)
-
-
-
         // This is used to align the xml view to this class
         setContentView(R.layout.activity_add_happy_place)
-
-        //click of it.)
-        // START
         setSupportActionBar(toolbar_add_place) // Use the toolbar to set the action bar.
         supportActionBar?.setDisplayHomeAsUpEnabled(true) // This is to use the home back button.
         // Setting the click event to the back button
@@ -76,6 +69,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     cal.get(Calendar.DAY_OF_MONTH))
                     .show()
             }
+
             R.id.tv_add_image ->{
                 val pictureDialog = AlertDialog.Builder(this)
                 pictureDialog.setTitle("Select Action")
@@ -109,10 +103,10 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
             }
-
-        } else if(requestCode == CAMERA){
-            val thumbnail: Bitmap = data!!.extras!!.get("data") as Bitmap
-            iv_place_image.setImageBitmap((thumbnail))
+            else if(requestCode == CAMERA){
+                val thumbnail: Bitmap = data!!.extras!!.get("data") as Bitmap
+                iv_place_image.setImageBitmap((thumbnail))
+        }
         }
     }
 
@@ -142,12 +136,6 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
      ).withListener(object: MultiplePermissionsListener {
          override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
              if (report!!.areAllPermissionsGranted()) {
-               /*  Toast.makeText(
-                     this@AddHappyPlaceActivity,
-                     "Storage READ/WRITE permission are granted. Now you can select an image from Gallery",
-                     Toast.LENGTH_SHORT
-                 ).show()
-                 */
                 val galleryIntent = Intent(Intent.ACTION_PICK,
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                  startActivityForResult(galleryIntent,GALLERY)
