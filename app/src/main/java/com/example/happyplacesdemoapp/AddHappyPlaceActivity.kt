@@ -6,6 +6,8 @@ import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.DatePickerDialog.OnDateSetListener
 import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
@@ -13,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import com.karumi.dexter.Dexter
@@ -22,7 +25,10 @@ import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import kotlinx.android.synthetic.main.activity_add_happy_place.*
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -35,6 +41,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
     companion object {
         private const val GALLERY = 1
         private const val CAMERA = 2
+        private const val IMAGE_DIRECTORY = "HappyPlacesImages"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,27 +96,28 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
 
     public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if(resultCode == Activity.RESULT_OK){
-            if(resultCode == GALLERY){
-                if(data != null){
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == CAMERA) {
+                val thumbnail: Bitmap = data!!.extras!!.get("data") as Bitmap
+                val saveImageToInternalStorage= saveImageToInternalStorage(thumbnail)
+                Log.e("Saved image: ","Path :: $saveImageToInternalStorage")
+
+                iv_place_image.setImageBitmap((thumbnail))
+            } else if (requestCode == GALLERY) {
+                if (data != null) {
                     val contentURI = data.data
-                    try{
-                        val selectedImageBitmap = MediaStore.Images.Media.getBitmap(this.contentResolver,contentURI)
-                    iv_place_image.setImageBitmap(selectedImageBitmap)
-                    } catch (e: IOException){
-                        e.printStackTrace()
-                        Toast.makeText(this@AddHappyPlaceActivity, "Failed to load the image from gallery",
-                            Toast.LENGTH_SHORT).show()
+                    try {
+                        val selectedImageBitmap =
+                            MediaStore.Images.Media.getBitmap(this.contentResolver, contentURI)
+                       val saveImageToInternalStorage= saveImageToInternalStorage(selectedImageBitmap)
+                        Log.e("Saved image: ","Path :: $saveImageToInternalStorage")
+                        iv_place_image.setImageBitmap(selectedImageBitmap)
+                    } catch (e: IOException) {
                     }
                 }
             }
-            else if(requestCode == CAMERA){
-                val thumbnail: Bitmap = data!!.extras!!.get("data") as Bitmap
-                iv_place_image.setImageBitmap((thumbnail))
-        }
         }
     }
-
     private fun  takePhotoFromCamera(){
         Dexter.withContext(this).withPermissions(
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -170,6 +178,22 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         val myFormat = "dd.MM.yyyy"
         val sdf = SimpleDateFormat(myFormat,Locale.getDefault())
         et_date.setText(sdf.format(cal.time).toString())
+    }
+
+    private fun saveImageToInternalStorage(bitmap: Bitmap): Uri{
+        val wrapper = ContextWrapper(applicationContext)
+        var file = wrapper.getDir(IMAGE_DIRECTORY,Context.MODE_PRIVATE)
+        file = File(file,"${UUID.randomUUID()}.jpg")
+
+        try {
+            val stream: OutputStream= FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.JPEG,100,stream)
+            stream.flush()
+            stream.close()
+        }catch (e: IOException){
+            e.printStackTrace()
+        }
+        return Uri.parse(file.absolutePath)
     }
 
 
